@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QRAuth Integration Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212b36; }
+    .container { max-width: 860px; margin: 0 auto; padding: 32px 20px; }
+    h1 { font-size: 28px; font-weight: 800; color: #1B2A4A; margin-bottom: 4px; }
+    .subtitle { color: #637381; margin-bottom: 40px; font-size: 15px; }
+    .card { background: #fff; border-radius: 12px; padding: 32px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; color: #1B2A4A; }
+    .card .desc { color: #637381; font-size: 13px; margin-bottom: 20px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+    .badge-green { background: #E8F5E9; color: #1B5E20; }
+    .badge-blue { background: #E3F2FD; color: #0D47A1; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #637381; margin-bottom: 6px; }
+    input[type="text"], input[type="url"] {
+      width: 100%; padding: 10px 14px; border: 1px solid #dfe3e8; border-radius: 8px;
+      font-size: 14px; font-family: inherit; margin-bottom: 12px;
+    }
+    input:focus { outline: none; border-color: #1B2A4A; }
+    .btn {
+      display: inline-block; padding: 10px 24px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-primary { background: #1B2A4A; color: #fff; }
+    .btn-primary:hover { background: #263B66; }
+    .btn-primary:disabled { background: #919eab; cursor: not-allowed; }
+    .result { margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px; display: none; }
+    .result.show { display: block; }
+    .result-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+    .result-label { font-size: 11px; font-weight: 600; color: #919eab; text-transform: uppercase; min-width: 100px; padding-top: 2px; }
+    .result-value { font-size: 13px; word-break: break-all; }
+    .result-value a { color: #0D47A1; text-decoration: none; }
+    .result-value a:hover { text-decoration: underline; }
+    .qr-output { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+    .qr-output img { border-radius: 8px; border: 1px solid #e0e0e0; }
+    .divider { border: none; border-top: 1px solid #f0f0f0; margin: 20px 0; }
+    #auth-user { display: none; padding: 16px; background: #E8F5E9; border-radius: 8px; margin-top: 16px; }
+    #auth-user .name { font-weight: 700; font-size: 16px; color: #1B5E20; }
+    #auth-user .email { font-size: 13px; color: #2E7D32; }
+    .code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; background: #1B2A4A; color: #e0e0e0; padding: 16px; border-radius: 8px; overflow-x: auto; white-space: pre; margin-top: 12px; line-height: 1.6; }
+    .code .comment { color: #637381; }
+    .code .string { color: #66BB6A; }
+    .code .keyword { color: #42A5F5; }
+    footer { text-align: center; padding: 32px 0; color: #919eab; font-size: 12px; }
+    footer a { color: #637381; }
+    .flex-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QRAuth Integration Demo</h1>
+    <p class="subtitle">Two features, one SDK. See the code on <a href="https://github.com/qrauth-io/example-integration" style="color:#0D47A1;">GitHub</a>.</p>
+
+    <!-- ================================================================== -->
+    <!-- Feature 1: QR-Based Login                                          -->
+    <!-- ================================================================== -->
+    <div class="card">
+      <div class="flex-row" style="margin-bottom: 4px;">
+        <h2>Sign in with QRAuth</h2>
+        <span class="badge badge-blue">Authentication</span>
+      </div>
+      <p class="desc">Scan a QR code on your phone to authenticate. No passwords, no OTPs.</p>
+
+      <div id="qrauth-login"></div>
+
+      <div id="auth-user">
+        <div class="name" id="auth-name"></div>
+        <div class="email" id="auth-email"></div>
+        <div style="margin-top: 8px; font-size: 12px; color: #2E7D32;">Identity verified via QRAuth</div>
+      </div>
+
+      <hr class="divider">
+      <div class="code"><span class="comment">// 1. Load the browser SDK</span>
+&lt;script src=<span class="string">"https://qrauth.io/sdk/qrauth-auth.js"</span>&gt;&lt;/script&gt;
+
+<span class="comment">// 2. Initialize with your client ID</span>
+<span class="keyword">new</span> QRAuth({
+  clientId: <span class="string">'qrauth_app_xxx'</span>,
+  element: <span class="string">'#qrauth-login'</span>,
+  onSuccess: (result) =&gt; {
+    <span class="comment">// result.sessionId, result.signature</span>
+    <span class="comment">// Send to your backend to verify</span>
+  },
+});</div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- Feature 2: Verified QR Code Generation                             -->
+    <!-- ================================================================== -->
+    <div class="card">
+      <div class="flex-row" style="margin-bottom: 4px;">
+        <h2>Generate a Verified QR Code</h2>
+        <span class="badge badge-green">Verification</span>
+      </div>
+      <p class="desc">Create a cryptographically signed QR code. Anyone scanning it sees a tamper-proof verification page with your organization identity and trust score.</p>
+
+      <label for="qr-url">Destination URL</label>
+      <input type="url" id="qr-url" placeholder="https://your-site.com/page" />
+
+      <label for="qr-label">Label (optional)</label>
+      <input type="text" id="qr-label" placeholder="Parking Meter #42" />
+
+      <button class="btn btn-primary" id="qr-generate">Generate Verified QR</button>
+
+      <div class="result" id="qr-result">
+        <div class="qr-output">
+          <img id="qr-img" width="180" height="180" alt="QR Code" />
+          <div>
+            <div class="result-row">
+              <span class="result-label">Status</span>
+              <span class="result-value"><span class="badge badge-green">Verified</span></span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">Token</span>
+              <span class="result-value" id="qr-token" style="font-family: monospace;"></span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">Verify URL</span>
+              <span class="result-value"><a id="qr-verify-url" href="#" target="_blank"></a></span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">Expires</span>
+              <span class="result-value" id="qr-expires"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="code"><span class="keyword">import</span> { QRAuth } <span class="keyword">from</span> <span class="string">'@qrauth/node'</span>;
+
+<span class="keyword">const</span> qrauth = <span class="keyword">new</span> QRAuth({ apiKey: process.env.QRAUTH_API_KEY });
+
+<span class="keyword">const</span> qr = <span class="keyword">await</span> qrauth.create({
+  destination: <span class="string">'https://your-site.com/page'</span>,
+  label: <span class="string">'Parking Meter #42'</span>,
+  expiresIn: <span class="string">'30d'</span>,
+});
+
+console.log(qr.verification_url);
+<span class="comment">// → https://qrauth.io/v/xK9m2pQ7</span></div>
+    </div>
+
+    <footer>
+      Built with <a href="https://qrauth.io">QRAuth</a> &mdash;
+      <a href="https://github.com/qrauth-io/example-integration">View source</a> &mdash;
+      <a href="https://qrauth.io/docs">Docs</a>
+    </footer>
+  </div>
+
+  <!-- QRAuth Browser SDK -->
+  <script src="https://qrauth.io/sdk/qrauth-auth.js"></script>
+  <script>
+    // ------------------------------------------------------------------
+    // Feature 1: QR-Based Login
+    // ------------------------------------------------------------------
+    var CLIENT_ID = '__QRAUTH_CLIENT_ID__';
+
+    new QRAuth({
+      clientId: CLIENT_ID,
+      element: '#qrauth-login',
+      baseUrl: '',
+      scopes: ['identity', 'email'],
+
+      onSuccess: function (result) {
+        // Verify on our backend
+        fetch('/api/auth/callback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: result.sessionId,
+            signature: result.signature,
+          }),
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.user) {
+              document.getElementById('auth-name').textContent = data.user.name || 'Authenticated';
+              document.getElementById('auth-email').textContent = data.user.email || '';
+              document.getElementById('auth-user').style.display = 'block';
+            }
+          })
+          .catch(function (err) {
+            console.error('Callback failed:', err);
+          });
+      },
+
+      onError: function (err) {
+        console.error('QRAuth error:', err);
+      },
+    });
+
+    // ------------------------------------------------------------------
+    // Feature 2: Verified QR Code Generation
+    // ------------------------------------------------------------------
+    document.getElementById('qr-generate').addEventListener('click', function () {
+      var url = document.getElementById('qr-url').value.trim();
+      var label = document.getElementById('qr-label').value.trim();
+      if (!url) { document.getElementById('qr-url').focus(); return; }
+
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+
+      fetch('/api/qrcodes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url, label: label }),
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.error) { alert(data.error); return; }
+
+          document.getElementById('qr-img').src = data.qr_image_url;
+          document.getElementById('qr-token').textContent = data.token;
+          document.getElementById('qr-verify-url').textContent = data.verification_url;
+          document.getElementById('qr-verify-url').href = data.verification_url;
+          document.getElementById('qr-expires').textContent = new Date(data.expires_at).toLocaleDateString();
+          document.getElementById('qr-result').classList.add('show');
+        })
+        .catch(function (err) {
+          alert('Failed to generate QR code');
+          console.error(err);
+        })
+        .finally(function () {
+          btn.disabled = false;
+          btn.textContent = 'Generate Verified QR';
+        });
+    });
+  </script>
+</body>
+</html>

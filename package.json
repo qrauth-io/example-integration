@@ -1,0 +1,13 @@
+{
+  "name": "qrauth-example",
+  "version": "1.0.0",
+  "description": "Example integration showing QRAuth QR-based login and verified QR code generation",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0"
+  }
+}
