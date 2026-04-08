@@ -1,10 +1,19 @@
-import Fastify from 'fastify';
-import { QRAuth } from '@qrauth/node';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// Load .env if present (no dependency needed)
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = join(__dirname, '.env');
+if (existsSync(envPath)) {
+  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
+    const match = line.match(/^\s*([^#=]+?)\s*=\s*(.*?)\s*$/);
+    if (match && !process.env[match[1]]) process.env[match[1]] = match[2];
+  }
+}
+
+import Fastify from 'fastify';
+import { QRAuth } from '@qrauth/node';
 
 // ---------------------------------------------------------------------------
 // Config
