@@ -57,12 +57,12 @@ app.get('/', (_, reply) => {
 // Auth-session proxy (browser SDK needs these)
 // ---------------------------------------------------------------------------
 
-app.post('/api/auth-sessions', async (request, reply) => {
+app.post('/api/v1/auth-sessions', async (request, reply) => {
   const { status, body } = await proxy.createSession(request.body);
   reply.status(status).send(body);
 });
 
-app.get('/api/auth-sessions/:id', async (request, reply) => {
+app.get('/api/v1/auth-sessions/:id', async (request, reply) => {
   const { id } = request.params;
   const { status, body } = await proxy.getSession(id, request.query);
   reply.status(status).send(body);
