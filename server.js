@@ -45,6 +45,15 @@ const proxy = qrauth.authSessionHandlers();
 
 const app = Fastify({ logger: true });
 
+// CORS — allow same-origin and Cloudflare-proxied requests
+app.addHook('onRequest', (request, reply, done) => {
+  reply.header('Access-Control-Allow-Origin', request.headers.origin || '*');
+  reply.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  reply.header('Access-Control-Allow-Headers', 'Content-Type, X-Client-Id, Authorization');
+  if (request.method === 'OPTIONS') { reply.status(204).send(); return; }
+  done();
+});
+
 // Serve the single-page frontend
 const indexHtml = readFileSync(join(__dirname, 'public', 'index.html'), 'utf-8')
   .replace('__QRAUTH_CLIENT_ID__', QRAUTH_CLIENT_ID);

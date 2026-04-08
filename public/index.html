@@ -137,8 +137,8 @@
 <span class="keyword">const</span> qrauth = <span class="keyword">new</span> QRAuth({ apiKey: process.env.QRAUTH_API_KEY });
 
 <span class="keyword">const</span> qr = <span class="keyword">await</span> qrauth.create({
-  destination: <span class="string">'https://your-site.com/page'</span>,
-  label: <span class="string">'Parking Meter #42'</span>,
+  destination: <span class="string">'https://qrauth.io/demo/geo'</span>,
+  label: <span class="string">'Cape Sounio'</span>,
   expiresIn: <span class="string">'30d'</span>,
 });
 
