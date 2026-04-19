@@ -46,6 +46,11 @@
     .code .comment { color: #637381; }
     .code .string { color: #66BB6A; }
     .code .keyword { color: #42A5F5; }
+    qrauth-login {
+      --qrauth-primary: #1B2A4A;
+      --qrauth-btn-bg: #1B2A4A;
+      --qrauth-btn-hover: #263B66;
+    }
     footer { text-align: center; padding: 32px 0; color: #919eab; font-size: 12px; }
     footer a { color: #637381; }
     .flex-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -57,7 +62,7 @@
     <p class="subtitle">Two features, one SDK. See the code on <a href="https://github.com/qrauth-io/example-integration" style="color:#0D47A1;">GitHub</a>.</p>
 
     <!-- ================================================================== -->
-    <!-- Feature 1: QR-Based Login                                          -->
+    <!-- Feature 1: QR-Based Login via <qrauth-login> web component         -->
     <!-- ================================================================== -->
     <div class="card">
       <div class="flex-row" style="margin-bottom: 4px;">
@@ -66,7 +71,14 @@
       </div>
       <p class="desc">Scan a QR code on your phone to authenticate. No passwords, no OTPs.</p>
 
-      <div id="qrauth-login"></div>
+      <qrauth-login
+        id="qrauth-login"
+        tenant="__QRAUTH_CLIENT_ID__"
+        base-url=""
+        redirect-uri="http://localhost:3000/"
+        scopes="identity email"
+        display="button">
+      </qrauth-login>
 
       <div id="auth-user">
         <div class="name" id="auth-name"></div>
@@ -75,18 +87,25 @@
       </div>
 
       <hr class="divider">
-      <div class="code"><span class="comment">// 1. Load the browser SDK</span>
-&lt;script src=<span class="string">"https://qrauth.io/sdk/qrauth-auth.js"</span>&gt;&lt;/script&gt;
+      <div class="code"><span class="comment">// 1. Load the pinned, SRI-verified components bundle</span>
+&lt;script
+  src=<span class="string">"https://cdn.qrauth.io/v1/components-0.4.0.js"</span>
+  integrity=<span class="string">"sha384-ZsvnpXBK9tghmz/PCtZUtR+7qTF7XhR35/SGNfJuJgLOBxnIRi3JYhRt1oFxNtU6"</span>
+  crossorigin=<span class="string">"anonymous"</span>&gt;&lt;/script&gt;
 
-<span class="comment">// 2. Initialize with your client ID</span>
-<span class="keyword">new</span> QRAuth({
-  clientId: <span class="string">'qrauth_app_xxx'</span>,
-  element: <span class="string">'#qrauth-login'</span>,
-  onSuccess: (result) =&gt; {
-    <span class="comment">// result.sessionId, result.signature</span>
-    <span class="comment">// Send to your backend to verify</span>
-  },
-});</div>
+<span class="comment">// 2. Drop the element into your page</span>
+&lt;qrauth-login
+  tenant=<span class="string">"qrauth_app_xxx"</span>
+  base-url=<span class="string">""</span>
+  redirect-uri=<span class="string">"http://localhost:3000/"</span>
+  scopes=<span class="string">"identity email"</span>&gt;&lt;/qrauth-login&gt;
+
+<span class="comment">// 3. Listen for the authenticated event</span>
+document.querySelector(<span class="string">'qrauth-login'</span>)
+  .addEventListener(<span class="string">'qrauth:authenticated'</span>, (e) =&gt; {
+    <span class="comment">// e.detail.sessionId + e.detail.signature</span>
+    <span class="comment">// POST to your backend verify route</span>
+  });</div>
     </div>
 
     <!-- ================================================================== -->
@@ -149,50 +168,53 @@ console.log(qr.verification_url);
     <footer>
       Built with <a href="https://qrauth.io">QRAuth</a> &mdash;
       <a href="https://github.com/qrauth-io/example-integration">View source</a> &mdash;
-      <a href="https://qrauth.io/docs">Docs</a>
+      <a href="https://docs.qrauth.io/guide/web-components.html">Web Components guide</a>
     </footer>
   </div>
 
-  <!-- QRAuth Browser SDK -->
-  <script src="https://qrauth.io/sdk/qrauth-auth.js"></script>
+  <!-- QRAuth Web Components bundle — pinned version, SRI-verified. -->
+  <!-- See https://cdn.qrauth.io/v1/latest.json for current version + hash. -->
+  <script
+    src="https://cdn.qrauth.io/v1/components-0.4.0.js"
+    integrity="sha384-ZsvnpXBK9tghmz/PCtZUtR+7qTF7XhR35/SGNfJuJgLOBxnIRi3JYhRt1oFxNtU6"
+    crossorigin="anonymous"></script>
+
   <script>
     // ------------------------------------------------------------------
-    // Feature 1: QR-Based Login
+    // Feature 1: QR-Based Login — bind to the <qrauth-login> events.
+    //
+    // Custom-element events don't bubble through React's synthetic event
+    // system, so wire them with addEventListener directly. See
+    // https://docs.qrauth.io/guide/web-components.html for the React
+    // wrapper pattern.
     // ------------------------------------------------------------------
-    var CLIENT_ID = '__QRAUTH_CLIENT_ID__';
+    var loginEl = document.getElementById('qrauth-login');
 
-    new QRAuth({
-      clientId: CLIENT_ID,
-      element: '#qrauth-login',
-      baseUrl: '',
-      scopes: ['identity', 'email'],
-
-      onSuccess: function (result) {
-        // Verify on our backend
-        fetch('/api/auth/callback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: result.sessionId,
-            signature: result.signature,
-          }),
+    loginEl.addEventListener('qrauth:authenticated', function (e) {
+      // e.detail: { sessionId, signature, user }
+      fetch('/api/auth/qrauth-callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: e.detail.sessionId,
+          signature: e.detail.signature,
+        }),
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.user) {
+            document.getElementById('auth-name').textContent = data.user.name || 'Authenticated';
+            document.getElementById('auth-email').textContent = data.user.email || '';
+            document.getElementById('auth-user').style.display = 'block';
+          }
         })
-          .then(function (res) { return res.json(); })
-          .then(function (data) {
-            if (data.user) {
-              document.getElementById('auth-name').textContent = data.user.name || 'Authenticated';
-              document.getElementById('auth-email').textContent = data.user.email || '';
-              document.getElementById('auth-user').style.display = 'block';
-            }
-          })
-          .catch(function (err) {
-            console.error('Callback failed:', err);
-          });
-      },
+        .catch(function (err) {
+          console.error('Callback failed:', err);
+        });
+    });
 
-      onError: function (err) {
-        console.error('QRAuth error:', err);
-      },
+    loginEl.addEventListener('qrauth:error', function (e) {
+      console.error('QRAuth error:', e.detail && e.detail.message);
     });
 
     // ------------------------------------------------------------------
