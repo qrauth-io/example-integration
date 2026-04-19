@@ -77,8 +77,20 @@ app.get('/api/v1/auth-sessions/:id', async (request, reply) => {
   reply.status(status).send(body);
 });
 
-// Verify callback — called by frontend after SDK onSuccess
-app.post('/api/auth/callback', async (request, reply) => {
+// Approval-page redirect. The mobile CTA in <qrauth-login> opens
+// `${baseUrl}/a/${token}` — since `base-url` points at this origin we
+// must forward to the real approval page at qrauth.io. Without this the
+// mobile flow dead-ends on a 404.
+// See https://docs.qrauth.io/guide/web-components.html#approval-page-redirect
+app.get('/a/:token', (request, reply) => {
+  const { token } = request.params;
+  reply.redirect(`https://qrauth.io/a/${token}`, 307);
+});
+
+// Verify callback — called from the qrauth:authenticated event handler
+// after the user approves on their phone. Name matches the docs'
+// recommended path (/api/auth/qrauth-callback).
+app.post('/api/auth/qrauth-callback', async (request, reply) => {
   const { sessionId, signature } = request.body;
   const result = await qrauth.verifyAuthResult(sessionId, signature);
 
